@@ -1,0 +1,64 @@
+version: "2"
+services:
+    elasticsearch:
+        image: elasticsearch:7.5.1
+        container_name: elasticsearch
+        ports:
+            - "9100:9100"
+            - "9200:9200"
+            - "9300:9300"
+        tty: true
+        environment: 
+            - discovery.type=single-node
+        networks:
+            elk-network:
+                ipv4_address: 192.168.0.101
+    kibana:
+        image: kibana:7.5.1
+        container_name: kibana
+        ports:
+            - "5601:5601"
+        environment:
+            - elasticsearch.url="http://elasticsearch:9200"
+        depends_on:
+            - elasticsearch
+        tty: true
+        networks:
+            elk-network:
+                ipv4_address: 192.168.0.102
+    # logstash:
+    #     image: logstash:7.5.1
+    #     container_name: logstash
+    #     ports:
+    #         - "5043:5043"
+    #         - "9600:9600"
+    #     depends_on:
+    #         - elasticsearch
+    #     tty: true
+    #     volumes:
+    #         - ./file/logstash_back.conf:/usr/share/logstash/pipeline/logstash.conf
+    #     networks:
+    #         elk-network:
+    #             ipv4_address: 192.168.0.103
+    filebeat:
+        image: docker.elastic.co/beats/filebeat:7.5.1
+        container_name: filebeat
+        environment: 
+            - setup.kibana.host="kibana:5601"
+            - output.elasticsearch.hosts=["elasticsearch:9200"]
+        volumes:
+            - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+            - ./logs/:/home/logs/
+        depends_on:
+            - elasticsearch
+            - kibana
+        tty: true
+        networks:
+            elk-network:
+                ipv4_address: 192.168.0.104
+         
+networks:
+    elk-network:
+        external:
+            name: elk-network
+                 
