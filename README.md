@@ -7,7 +7,8 @@ docker network create --subnet=192.168.0.1/16
 ### Elatsticsearch
 
 - 额外安装 `elasticsearch-head`
-```
+
+```shell
 vi config/elasticsearch.yml
 # 添加
 http.cors.enabled: true
@@ -31,4 +32,17 @@ cd elasticsearch-head-master
 npm install
 cnpm install
 npm run start
+```
+
+- 多节点分布式
+
+```shell
+# 选取安装了 head 的机器作为 master
+vi config/elasticsearch.yml
+# 添加
+cluster.name: "uchatchat"
+node.name: "slave1"
+network.host: 0.0.0.0
+
+discovery.zen.ping.unicast.hosts: ["192.168.0.101"]
 ```

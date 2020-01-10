@@ -1,31 +1,76 @@
 version: "2"
 services:
-    elasticsearch:
+    es-master:
         image: elasticsearch:7.5.1
-        container_name: elasticsearch
+        container_name: es-master
         ports:
-            - "9100:9100"
             - "9200:9200"
             - "9300:9300"
-        tty: true
         environment: 
-            - discovery.type=single-node
+            - cluster.name=uchatchat
+            - node.name=master
+            - cluster.initial_master_nodes=master
+            - http.cors.enabled=true
+            - http.cors.allow-origin=*
+            
+        tty: true
+        restart: always
         networks:
             elk-network:
                 ipv4_address: 192.168.0.101
-    kibana:
-        image: kibana:7.5.1
-        container_name: kibana
-        ports:
-            - "5601:5601"
-        environment:
-            - elasticsearch.url="http://elasticsearch:9200"
-        depends_on:
-            - elasticsearch
+    es-slave1:
+        image: elasticsearch:7.5.1
+        container_name: es-slave1
+        environment: 
+            - cluster.name=uchatchat
+            - node.name=slave_1
+            - discovery.zen.ping.unicast.hosts=192.168.0.101
+            - cluster.initial_master_nodes=master
+            - http.cors.enabled=true
+            - http.cors.allow-origin=*
         tty: true
+        restart: always
         networks:
             elk-network:
-                ipv4_address: 192.168.0.102
+                ipv4_address: 192.168.0.111
+    es-slave2:
+        image: elasticsearch:7.5.1
+        container_name: es-slave2
+        environment: 
+            - cluster.name=uchatchat
+            - node.name=slave_2
+            - discovery.zen.ping.unicast.hosts=192.168.0.101
+            - cluster.initial_master_nodes=master
+            - http.cors.enabled=true
+            - http.cors.allow-origin=*
+        tty: true
+        restart: always
+        networks:
+            elk-network:
+                ipv4_address: 192.168.0.112
+    es-head:
+        image: mobz/elasticsearch-head:5
+        container_name: es-head
+        ports:
+            - "9100:9100"
+        tty: true
+        restart: always
+        networks:
+            elk-network:
+                ipv4_address: 192.168.0.113
+    # kibana:
+    #     image: kibana:7.5.1
+    #     container_name: kibana
+    #     ports:
+    #         - "5601:5601"
+    #     environment:
+    #         - elasticsearch.url="http://elasticsearch:9200"
+    #     depends_on:
+    #         - elasticsearch
+    #     tty: true
+    #     networks:
+    #         elk-network:
+    #             ipv4_address: 192.168.0.102
     # logstash:
     #     image: logstash:7.5.1
     #     container_name: logstash
@@ -40,22 +85,22 @@ services:
     #     networks:
     #         elk-network:
     #             ipv4_address: 192.168.0.103
-    filebeat:
-        image: docker.elastic.co/beats/filebeat:7.5.1
-        container_name: filebeat
-        environment: 
-            - setup.kibana.host="kibana:5601"
-            - output.elasticsearch.hosts=["elasticsearch:9200"]
-        volumes:
-            - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
-            - ./logs/:/home/logs/
-        depends_on:
-            - elasticsearch
-            - kibana
-        tty: true
-        networks:
-            elk-network:
-                ipv4_address: 192.168.0.104
+    # filebeat:
+    #     image: docker.elastic.co/beats/filebeat:7.5.1
+    #     container_name: filebeat
+    #     environment: 
+    #         - setup.kibana.host="kibana:5601"
+    #         - output.elasticsearch.hosts=["elasticsearch:9200"]
+    #     volumes:
+    #         - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+    #         - ./logs/:/home/logs/
+    #     depends_on:
+    #         - elasticsearch
+    #         - kibana
+    #     tty: true
+    #     networks:
+    #         elk-network:
+    #             ipv4_address: 192.168.0.104
          
 networks:
     elk-network:
